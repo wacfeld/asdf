@@ -3,36 +3,33 @@
 
 
 class Portal:  # called Portal because cars start and end here, appearing and disappearing (there are multiple portals)
-    def __init__(self, inter):  # the intersection it feed into; not road becase roads don't have an adjacent field
+    def __init__(self, inter, l):  # the intersection it feed into; not road becase roads don't have an adjacent field
         self.cars = []
         self.adjintersection = inter
+        self.location = l
 
     def createcar(self):
-        newcar = Car()
+        newcar = Car(self)
         self.cars.append(newcar)
 
     adjintersection = None
-    location = None
+    location = None  # location relative to intersection; 'u', 'r', 'd', 'l'
     cars = None
 
 
 class Car:
-    def __init__(self):
+    def __init__(self, p):
         # cars spawn in Portals which are adjacent to the outer intersections
 
-        self.state = "d"
+        self.state = 'd'
+        self.location = 'p'
+        self.parent = p
         self.coords = [None, None]
         self.motionvector = [None, None]
-        self.portal = True
 
-    @staticmethod
-    def decidedestination(startcoords):
-        # TODO: figure out how this works
-        return 'dummy data'
-
-    inportal = None
+    # location == 'l', 'p' is digital, 'm' is analog
     state = None  # state can be either in a lane (digital) or in the middle of an intersection (analog)
-    turning = None  # 'left', 'forward', 'right'
+    location = None  # 'l', 'm', 'p' for Lane, Middle, Portal; also doubles as parent
     destination = None  # which portal it wants to get to; decided by MindController
 
     # these only apply when in analog state
@@ -66,11 +63,12 @@ class Road:
         self.forward = Lane('f', self)
         self.right = Lane('r', self)
         self.crossng = ZebraCrossing(self)
+        self.light = Light(self)
 
+    light = None
     left = None
     forward = None
     right = None
-    size = None  # how many cars it can hold; how far a car has to travel (digitally) to get to the middle
     crossing = None  # a ZebraCrossing; placed here for easy access from cars
 
 
@@ -90,13 +88,14 @@ class Middle:
 
 
 class Pedestrian:
-    # sole purpose is to spawn and 'walk' across an intersetion
-    # walking is a digital task, so they have no location; see ZebraCrossing
-
+    # sole purpose is to spawn and occupy an intersection for x time
+    # walking is a digital task
+    # TODO: should this even be a class? The MindController could just set a ZC to occupied for x time
     def __init__(self):
         self.walking = False
 
     def startwalking(self, intersection):
+        # TODO: figure this out; probably use MC
         pass
 
     walking = None
@@ -111,6 +110,7 @@ class ZebraCrossing:
         self.occupied = False
         self.numberofpedestrians = 0
         self.parentroad = parent
+        self.light = Light(self)
 
     def checkoccupied(self):  # called by pedestrian before and after crossing
         if not self.numberofpedestrians:
@@ -120,6 +120,7 @@ class ZebraCrossing:
 
     # when a pedestrian is crossing it adds 1 to numberofpedestrians, when it leaves it subtracts 1
     # the crossing checks when numberofpedestrians == 0 and then it becomes not occupied
+    light = None
     numberofpedestrians = None
     occupied = None
     parent = None
