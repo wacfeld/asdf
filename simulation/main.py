@@ -1,7 +1,3 @@
-# when a car is on a lane, it behaves like in a list, however it starts getting precise motion
-# when it goes into the center
-
-
 class Portal:  # called Portal because cars start and end here, appearing and disappearing (there are multiple portals)
     def __init__(self, inter, l):  # the intersection it feed into; not road becase roads don't have an adjacent field
         self.cars = []
@@ -38,17 +34,17 @@ class Car:
 
 
 class Lane:
-    def __init__(self, d, parent):  # direction is l, r, or f for left, right, forward
+    def __init__(self, d, parent, c):  # direction is l, r, or f for left, right, forward
         self.cars = []
         self.direction = d
         self.parentroad = parent
+        self.capacity = c
 
     def numberofcars(self):
         return len(self.cars)
 
     capacity = None  # how many cars it can hold; right and left are less, forward is more
     # TODO: (see comment above) figure out exact numbers
-
     direction = None
     parentroad = None
     cars = None  # first in the array are closest to middle of intersection
@@ -151,22 +147,13 @@ class Intersection:
         self.initroads(whichroads)
         self.middle = Middle(5, self)  # TODO: change 5 to something else
 
-    @classmethod
-    def initwithoutadjacents(cls, whichroads):  # still has roads because everything must have at least 1 road!
-        cls.adjacents = (None, None, None, None)
-        cls.initroads(whichroads)
-
-    def initroads(self, whichroads):  # called by __init__ and initwithoutadjacents to save room
+        # initiates roads
         self.roads = []
         for b in whichroads:  # b for boolean
             if int(b):
                 newroad = Road()
                 self.roads.append(newroad)
             else:
-                # TODO: figure out, should this append None, or an inactive road?
-                # (if it's the latter we would make that a parameter for the constructor)
-                # in fact, unless we are actually going to remove random roads,
-                # this might not even be necessary
                 self.roads.append(None)
 
     # these are the roads, or portals, adjacent to this intersection
@@ -183,7 +170,9 @@ class MindController:
     # makes does things like make cars move, spawn
     # also monitors stuff like downtime
     # TODO: finish this
-    pass
+
+    def __init__(self):
+        pass
 
 
 def main():
