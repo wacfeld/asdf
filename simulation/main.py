@@ -2,7 +2,7 @@ class Portal:  # called Portal because cars/pedestrians start and end here (ther
     # attaches to road of intersection
     # cars coming from the intersection go directly from Middle to Portal
 
-    def __init__(self, road):  # the intersection it feeds into; not road becase roads don't have an adjacent field
+    def __init__(self, road):
         self.cars = []
         self.peds = []
         self.adjroad = road  # the road it feeds into
@@ -30,14 +30,15 @@ class Car:
     def __init__(self, p):
         # cars spawn in Portals which are adjacent to the outer intersections
         # location == 'l', 'p' is digital; 'm' is analog
-
+        # when turning cars follow a rough circle
+        
         self.parent = p  # either Portal, Lane, or Middle; this also tells us how it should behave
-        # ^cars are always in digital state
+        # ^cars are always in a digital state
 
         self.location = 'p'  # 'l', 'm', 'p' for Lane, Middle, Portal; also doubles as parent
         self.destination = None  # the portal it wants to get to
 
-        # these only apply when in analog state
+        # these only apply when in the middle of an intersection
         self.coords = [None, None]  # (0,0) is center of Intersection, x moves right, y moves up
         self.motionvector = [None, None]  # where it moves next in the Intersection; might change to direction and angle
 
@@ -158,8 +159,8 @@ class Intersection:
     # whichroads is a string of 4 1s and 0s telling you what roads are active, going clockwise
     # note that an inactive road is not necessarily an edge road, since the edges typically have roads for the portals
     # adj always is a tuple of 4 since if it's on the edge it has portals
-    def __init__(self, adj, whichroads):
-        self.adjacents = adj  # roads/portals adjacent to this intersection
+    def __init__(self, whichroads):
+        self.adjacents = [None] * 4  # roads/portals adjacent to this intersection
         self.middle = Middle(5, self)  # TODO: change 5 to something else
 
         # creates sidewalks, which then get attached to zebracrossings in roads
@@ -199,13 +200,24 @@ class MindController:
     # for convenience
     # TODO: finish this
 
-    def __init__(self):
-        pass
-
+    def __init__(self, s):
+        self.sidelength = s  # not including Portals
+        
+    def initinter(self, s):
+        self.intersections = [[None] * s] * s
+        for y in range(s):  # y goes top to bottom
+            for x in range(s):  # x goes left to right
+                intersections[y][x] = Intersection('1111')
+        
+        # need to do this twice to set the adjacent property
+        for y in range(s):
+            for x in range(s):
+                # TODO: finish this
+                pass
 
 def main():
-    print("Program start")
+    print('Program start')
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
