@@ -1,76 +1,73 @@
-class Portal:  # called Portal because cars start and end here, appearing and disappearing (there are multiple portals)
-    def __init__(self, inter, l):  # the intersection it feed into; not road becase roads don't have an adjacent field
+class Portal:  # called Portal because cars/pedestrians start and end here (there are multiple portals)
+    # attaches to road of intersection
+    # cars coming from the intersection go directly from Middle to Portal
+
+    def __init__(self, road):  # the intersection it feeds into; not road becase roads don't have an adjacent field
         self.cars = []
-        self.adjintersection = inter
-        self.location = l
+        self.peds = []
+        self.adjroad = road  # the road it feeds into
+
+    # TODO: should we merge cars and peds into one list (as well as the functions)?
 
     def createcar(self):
         newcar = Car(self)
         self.cars.append(newcar)
+        return newcar  # gives car to MindController, the one that calls the function and decides the car's destination
 
-    adjintersection = None
-    location = None  # location relative to intersection; 'u', 'r', 'd', 'l'
-    cars = None
+    def createped(self):  # basically same as createcar()
+        newped = Pedestrian(self)
+        self.peds.append(newped)
+        return newped
+
+    def deletecar(self, c):  # removes car forever
+        del self.cars[self.cars.index(c)]  # get index of c in cars, then delete that element
+
+    def deleteped(self, p):
+        del self.peds[self.peds.index(p)]
 
 
 class Car:
     def __init__(self, p):
         # cars spawn in Portals which are adjacent to the outer intersections
+        # location == 'l', 'p' is digital; 'm' is analog
 
-        self.state = 'd'
-        self.location = 'p'
-        self.parent = p
-        self.coords = [None, None]
-        self.motionvector = [None, None]
+        self.parent = p  # either Portal, Lane, or Middle; this also tells us how it should behave
+        # ^cars are always in digital state
 
-    # location == 'l', 'p' is digital, 'm' is analog
-    state = None  # state can be either in a lane (digital) or in the middle of an intersection (analog)
-    location = None  # 'l', 'm', 'p' for Lane, Middle, Portal; also doubles as parent
-    destination = None  # which portal it wants to get to; decided by MindController
+        self.location = 'p'  # 'l', 'm', 'p' for Lane, Middle, Portal; also doubles as parent
+        self.destination = None  # the portal it wants to get to
 
-    # these only apply when in analog state
-    coords = None  # (0,0) is center of intersection, x moves right, y moves up
-    motionvector = None  # TODO: decide if this should be a vector, or direction and velocity
+        # these only apply when in analog state
+        self.coords = [None, None]  # (0,0) is center of Intersection, x moves right, y moves up
+        self.motionvector = [None, None]  # where it moves next in the Intersection; might change to direction and angle
 
 
 class Lane:
-    def __init__(self, d, parent, c):  # direction is l, r, or f for left, right, forward
-        self.cars = []
-        self.direction = d
+    def __init__(self, d, parent, c):
+        self.cars = []  # first in the array are closest to middle of intersection
+        self.direction = d  # direction is l, r, or f
         self.parentroad = parent
-        self.capacity = c
-
-    def numberofcars(self):
-        return len(self.cars)
-
-    capacity = None  # how many cars it can hold; right and left are less, forward is more
-    # TODO: (see comment above) figure out exact numbers
-    direction = None
-    parentroad = None
-    cars = None  # first in the array are closest to middle of intersection
+        self.capacity = c  # how many cars it can hold; right and left are less, forward is more
+        # TODO: figure out eact numbers for capacity
 
 
 class Road:
-    # The number of intersections varies, but not the number of lanes
-    # note that intersections at the edge still have 4 roads
+    # TODO: should the number of lanes be 2 or 3? and should it change?
+    # note that intersections at the edge still have 4 roads (1 or two are technically Portals)
 
     def __init__(self):
         self.left = Lane('l', self)
         self.forward = Lane('f', self)
         self.right = Lane('r', self)
-        self.crossng = ZebraCrossing(self)
-        self.light = Light(self)
 
-    light = None
-    left = None
-    forward = None
-    right = None
-    crossing = None  # a ZebraCrossing; placed here for easy access from cars
+        self.crossing = ZebraCrossing(self)  # a ZebraCrossing; placed here for easy access from cars
+        self.light = Light(self)  # note that lights control the road they belong to, not the opposite!
 
 
 class Middle:
     # the middle of the intersection; split up into nxn squares
     # n must be even to evenly split up the roads leading in and out
+    # certain square are special; e.g. some are places a car can leave or enter an intersection
     # TODO: ^ decide what n is
 
     def __init__(self, s, parent):  # s is side length
@@ -78,23 +75,35 @@ class Middle:
         self.squares = [[None]*s]*s
         self.parent = parent
 
-    size = None
-    squares = None
-    parent = None
+
+class Sidewalk:
+    # small square at the four corners of intersections, where pedestrians stay when not crossing roads
+    def __init__(self, p, c1, c2):
+        self.parent = p
+
+        self.peds = []
+        self.crossing1, self.crossing2 = c1, c2
 
 
 class Pedestrian:
     # sole purpose is to spawn and occupy an intersection for x time
     # walking is a digital task
-    # TODO: should this even be a class? The MindController could just set a ZC to occupied for x time
-    def __init__(self):
-        self.walking = False
+    # different pedestrians have different walking speeds
+    # when a pedestrian walks it occupies, the crossing, stays on the same sidewalk,,
+    # then after x time goes to the other sidwalk and unoccupies the crossing
+
+    def __init__(self, p):
+        self.walkingspeed = self.decidewalkingspeed()
+        self.parent = p
+
+    @staticmethod
+    def decidewalkingspeed():
+        # TODO: figure this out
+        return 10
 
     def startwalking(self, intersection):
-        # TODO: figure this out; probably use MC
+        # TODO: figure this out
         pass
-
-    walking = None
 
 
 class ZebraCrossing:
@@ -105,8 +114,15 @@ class ZebraCrossing:
     def __init__(self, parent):  # parent is a Road
         self.occupied = False
         self.numberofpedestrians = 0
-        self.parentroad = parent
         self.light = Light(self)
+
+        self.parentroad = parent
+
+        # where pedestrians stand
+        self.sidewalk1 = None  # will initiate after ZebraCrossing is created
+        self.sidewalk2 = None
+
+        self.pedlight = Light(self)
 
     def checkoccupied(self):  # called by pedestrian before and after crossing
         if not self.numberofpedestrians:
@@ -143,32 +159,44 @@ class Intersection:
     # note that an inactive road is not necessarily an edge road, since the edges typically have roads for the portals
     # adj always is a tuple of 4 since if it's on the edge it has portals
     def __init__(self, adj, whichroads):
-        self.adjacents = adj
-        self.initroads(whichroads)
+        self.adjacents = adj  # roads/portals adjacent to this intersection
         self.middle = Middle(5, self)  # TODO: change 5 to something else
 
+        # creates sidewalks, which then get attached to zebracrossings in roads
+
         # initiates roads
+        # roads are ordered clockwise
         self.roads = []
         for b in whichroads:  # b for boolean
             if int(b):
                 newroad = Road()
+
                 self.roads.append(newroad)
             else:
                 self.roads.append(None)
 
-    # these are the roads, or portals, adjacent to this intersection
-    # after everything is complete adjacents should always be a tuple of 4 because the edges have portals
-    adjacents = None
-    roads = None  # these are ordered up, right, down, left - clockwise
-    middle = None
+        # set the crossings corresponding to sidewalks
+        s1 = Sidewalk(self, self.roads[0], self.roads[1])
+        s2 = Sidewalk(self, self.roads[1], self.roads[2])
+        s3 = Sidewalk(self, self.roads[2], self.roads[3])
+        s4 = Sidewalk(self, self.roads[3], self.roads[1])
 
-    # note that lights do NOT correspond to the opposite road, rather, a light on road X controls road X
+        # set the sidewalks corresponding to crossings
+        self.roads[0].crossing.s1 = s1
+        self.roads[1].crossing.s1 = s2
+        self.roads[2].crossing.s1 = s3
+        self.roads[3].crossing.s1 = s4
+
+        self.roads[0].crossing.s2 = s2
+        self.roads[1].crossing.s2 = s3
+        self.roads[2].crossing.s2 = s4
+        self.roads[3].crossing.s2 = s1
 
 
 class MindController:
-    # this controls all the interactions of the simulation, aside from controlling the traffic lights
-    # makes does things like make cars move, spawn
-    # also monitors stuff like downtime
+    # this controls all the interactions of the simulation, aside from the traffic lights
+    # does things like make cars move, spawn, etc.
+    # for convenience
     # TODO: finish this
 
     def __init__(self):
