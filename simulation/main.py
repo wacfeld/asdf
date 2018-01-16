@@ -31,7 +31,7 @@ class Car:
         # cars spawn in Portals which are adjacent to the outer intersections
         # location == 'l', 'p' is digital; 'm' is analog
         # when turning cars follow a rough circle
-        
+
         self.parent = p  # either Portal, Lane, or Middle; this also tells us how it should behave
         # ^cars are always in a digital state
 
@@ -198,22 +198,32 @@ class MindController:
     # this controls all the interactions of the simulation, aside from the traffic lights
     # does things like make cars move, spawn, etc.
     # for convenience
-    # TODO: finish this
 
     def __init__(self, s):
         self.sidelength = s  # not including Portals
-        
-    def initinter(self, s):
         self.intersections = [[None] * s] * s
+
+    def initinter(self, s):
         for y in range(s):  # y goes top to bottom
             for x in range(s):  # x goes left to right
-                intersections[y][x] = Intersection('1111')
-        
+                self.intersections[y][x] = Intersection('1111')
+
         # need to do this twice to set the adjacent property
         for y in range(s):
             for x in range(s):
-                # TODO: finish this
-                pass
+                inter = self.interseceions[y][x]
+                coords = [[x, y-1], [x+1, y], [x, y+1], [x-1, y]]
+                for adjcoord in coords:
+                    if (not adjcoord[0] in range(s)) or (not adjcoord[1] in range(s)):  # then we create a portal
+                        a = adjcoord[0]  # shorter
+                        b = adjcoord[1]
+                        road = inter.roads[0] if a < y else inter.roads[1] if x < b else inter.roads[2] if y < a else \
+                            inter.roads[3]
+                        portal = Portal(road)
+                        inter.adj[coords.index([a, b])] = portal
+                    else:
+                        inter.adj[coords.index([a, b])] = self.intersections[b][a]
+
 
 def main():
     print('Program start')
