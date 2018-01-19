@@ -227,7 +227,12 @@ class MindController:
 
 def main():
     print('Program start')
-
+    mc = MindController(3)
+    for y in range(3):
+        for x in range(3):
+            # have something here to test if it initiated correctly
+            pass
+    
 
 if __name__ == '__main__':
     main()
