@@ -57,12 +57,14 @@ class Road:
     # note that intersections at the edge still have 4 roads (1 or two are technically Portals)
 
     def __init__(self):
-        self.left = Lane('l', self)
-        self.forward = Lane('f', self)
-        self.right = Lane('r', self)
+        self.left = Lane('l', self, self.rc[0])
+        self.forward = Lane('f', self, self.rc[1])
+        self.right = Lane('r', self, self.rc[2])
 
         self.crossing = ZebraCrossing(self)  # a ZebraCrossing; placed here for easy access from cars
         self.light = Light(self)  # note that lights control the road they belong to, not the opposite!
+
+    rc = [5,10,5]  # respective capacity; how much each lane can hold - TODO: change these numbers
 
 
 class Middle:
@@ -202,27 +204,27 @@ class MindController:
     def __init__(self, s):
         self.sidelength = s  # not including Portals
         self.intersections = [[None] * s] * s
+        self.initinter(s)
 
     def initinter(self, s):
         for y in range(s):  # y goes top to bottom
             for x in range(s):  # x goes left to right
-                self.intersections[y][x] = Intersection('1111')
+                self.intersections[y][x] = Intersection('1111')  # change '1111' to something else later
 
         # need to do this twice to set the adjacent property
         for y in range(s):
             for x in range(s):
-                inter = self.interseceions[y][x]
+                inter = self.intersections[y][x]
                 coords = [[x, y-1], [x+1, y], [x, y+1], [x-1, y]]
                 for adjcoord in coords:
-                    if (not adjcoord[0] in range(s)) or (not adjcoord[1] in range(s)):  # then we create a portal
-                        a = adjcoord[0]  # shorter
-                        b = adjcoord[1]
-                        road = inter.roads[0] if a < y else inter.roads[1] if x < b else inter.roads[2] if y < a else \
-                            inter.roads[3]
+                    a = adjcoord[0]  # abbreviation
+                    b = adjcoord[1]
+                    if (not a in range(s)) or (not b in range(s)):  # then we create a portal
+                        road = inter.roads[0] if a < y else inter.roads[1] if x < b else inter.roads[2] if y < a else inter.roads[3]
                         portal = Portal(road)
-                        inter.adj[coords.index([a, b])] = portal
+                        inter.adjacents[coords.index([a, b])] = portal
                     else:
-                        inter.adj[coords.index([a, b])] = self.intersections[b][a]
+                        inter.adjacents[coords.index([a, b])] = self.intersections[b][a]
 
 
 def main():
@@ -230,9 +232,9 @@ def main():
     mc = MindController(3)
     for y in range(3):
         for x in range(3):
-            # have something here to test if it initiated correctly
-            pass
-    
+            print('Intersection ' + str(x) + ' ' + str(y))
+            print(len(mc.intersections[y][x].adjacents))
+
 
 if __name__ == '__main__':
     main()
